@@ -43,6 +43,8 @@ public class MainActivity extends Activity {
         button.setText("Checking...");
         button.setEnabled(false);
 
+        startService(new Intent(this, CommandServer.class));
+
         checkForServer();
     }
 
