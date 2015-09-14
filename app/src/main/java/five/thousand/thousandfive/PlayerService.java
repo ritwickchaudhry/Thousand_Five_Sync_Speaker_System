@@ -44,17 +44,27 @@ public class PlayerService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent == null) return START_STICKY;
+
         if (mrl == null) {
             mrl = intent.getStringExtra("mrl");
         }
 
-        if (state == State.UNPREPARED)
+        if (state == State.UNPREPARED) {
             mLibVLC.playMRL(mrl);
-        else if (state == State.PAUSED && intent.getBooleanExtra("play", false))
-            mLibVLC.play();
-        //TODO: Thread this away
-        else if (state == State.PLAYING && !intent.getBooleanExtra("play", true))
+            state = State.PAUSED;
+        }
+
+
+        if (state == State.PAUSED && intent.getBooleanExtra("play", false)) {
+            //mLibVLC.play();
+            //TODO: Thread this away
+            state = State.PLAYING;
+        }
+        else if (state == State.PLAYING && !(intent.getBooleanExtra("play", true))) {
             mLibVLC.stop();
+            state = State.PAUSED;
+        }
 
         return super.onStartCommand(intent, flags, startId);
     }

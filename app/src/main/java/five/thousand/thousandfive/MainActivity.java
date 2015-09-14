@@ -47,11 +47,20 @@ public class MainActivity extends Activity {
     }
 
     public void buttonClicked(View v) {
+        Intent intent;
         switch (button.getText().toString()) {
             case "Play":
-                Intent intent = new Intent(this, PlayerService.class);
+                intent = new Intent(this, PlayerService.class);
                 intent.putExtra("mrl", mrl);
+                intent.putExtra("play", true);
                 startService(intent);
+                button.setText("Pause");
+                break;
+            case "Pause":
+                intent = new Intent(this, PlayerService.class);
+                intent.putExtra("play", false);
+                startService(intent);
+                button.setText("Play");
                 break;
             case "Recheck":
                 checkForServer();
