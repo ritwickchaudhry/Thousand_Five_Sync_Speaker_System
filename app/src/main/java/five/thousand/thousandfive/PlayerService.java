@@ -10,22 +10,22 @@ import org.videolan.libvlc.LibVlcException;
 
 public class PlayerService extends Service {
 
-    private LibVLC mLibVLC;
-    private State state;
-    private String mrl;
-    private enum State {
-        UNPREPARED,
-        PAUSED,
-        PLAYING
-    }
+    private static LibVLC mLibVLC;
+    private static String mrl;
+    public enum State { UNPREPARED, PAUSED, PLAYING }
+    public static State state = State.UNPREPARED;
 
     public PlayerService() {
         mLibVLC = new LibVLC();
         mLibVLC.setHttpReconnect(true);
-        mLibVLC.setNetworkCaching(1000); // ms
+        mLibVLC.setNetworkCaching(10); // ms
         //TODO: make this configurable over the network.
 
         mrl = null;
+    }
+
+    public static boolean isPlaying() {
+        return (mLibVLC != null) && mLibVLC.isPlaying();
     }
 
     @Override
@@ -35,7 +35,6 @@ public class PlayerService extends Service {
         try {
             mLibVLC.init(this);
             state = State.UNPREPARED;
-            Toast.makeText(this, "LibVLC ready", Toast.LENGTH_SHORT).show();
         } catch (LibVlcException e) {
             Toast.makeText(this, "Failed to initialize LibVLC", Toast.LENGTH_LONG).show();
             mLibVLC = null;
@@ -46,18 +45,19 @@ public class PlayerService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent == null) return START_STICKY;
 
-        if (mrl == null) {
+        if (intent.hasExtra("mrl")) {
             mrl = intent.getStringExtra("mrl");
         }
 
         if (state == State.UNPREPARED) {
             mLibVLC.playMRL(mrl);
+            mLibVLC.pause();
             state = State.PAUSED;
         }
 
 
         if (state == State.PAUSED && intent.getBooleanExtra("play", false)) {
-            //mLibVLC.play();
+            mLibVLC.play();
             //TODO: Thread this away
             state = State.PLAYING;
         }

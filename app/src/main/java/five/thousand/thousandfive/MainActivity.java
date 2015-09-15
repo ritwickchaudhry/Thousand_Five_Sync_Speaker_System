@@ -37,11 +37,8 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-
-        button.setText("Checking...");
-        button.setEnabled(false);
+    protected void onStart() {
+        super.onStart();
 
         startService(new Intent(this, CommandServer.class));
 
@@ -73,6 +70,15 @@ public class MainActivity extends Activity {
     }
 
     private void checkForServer() {
+        if (PlayerService.isPlaying()) {
+            button.setText("Pause");
+            button.setEnabled(true);
+            return;
+        }
+
+        button.setText("Checking...");
+        button.setEnabled(false);
+
         StringRequest mrlRequest = new StringRequest(Request.Method.GET, SERVER,
                 new Response.Listener<String>() {
                     @Override
