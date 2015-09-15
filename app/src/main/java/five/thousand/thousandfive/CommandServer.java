@@ -1,50 +1,39 @@
 package five.thousand.thousandfive;
 
-import android.app.DownloadManager;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
 import android.widget.Toast;
 
 import com.esotericsoftware.kryonet.Connection;
-import com.esotericsoftware.kryonet.JsonSerialization;
 import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
-import com.esotericsoftware.minlog.Log;
 
 import java.io.IOException;
 
+import five.thousand.thousandfive.Commands.Pause;
+import five.thousand.thousandfive.Commands.Play;
+import five.thousand.thousandfive.utils.CommandSerialization;
+
 public class CommandServer extends Service {
     private Server server;
-    private Context mContext;
 
     public CommandServer() {
-        JsonSerialization js = new JsonSerialization();
-        server = new Server(16384, 2048, js);
-    }
-
-    public class CommandRequest {
-        public String command;
+        CommandSerialization cs = new CommandSerialization();
+        cs.register(Play.class);
+        cs.register(Pause.class);
+        server = new Server(16384, 2048, cs);
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
 
-        mContext = this;
-
-//        server.getKryo().register(CommandRequest.class);
-        Log.set(Log.LEVEL_DEBUG);
-
         server.addListener(new Listener() {
+            @Override
             public void received(Connection conn, Object obj) {
-                if (obj instanceof CommandRequest) {
-                    CommandRequest command = (CommandRequest) obj;
-                    Toast.makeText(mContext, "Got a command: " + command.command, Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(mContext, "Received something. Not a CommandRequest", Toast.LENGTH_LONG).show();
-                }
+                super.received(conn, obj);
+                //TODO: Send control commands to player service
                 conn.close();
             }
         });
@@ -54,9 +43,15 @@ public class CommandServer extends Service {
         }
         catch (IOException e)
         {
-            Toast.makeText(this, "Couldn't Connect", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Couldn't listen for commands", Toast.LENGTH_LONG).show();
         }
         server.start();
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        super.onStartCommand(intent, flags, startId);
+        return START_STICKY;
     }
 
     @Override
