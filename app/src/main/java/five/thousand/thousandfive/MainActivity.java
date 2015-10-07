@@ -3,12 +3,14 @@ package five.thousand.thousandfive;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
@@ -18,10 +20,14 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class MainActivity extends Activity {
 
     private RequestQueue requestQueue;
-    public static String SERVER = "http://server.dns/mrl";
+    public static String SERVER = "http://server.dns";
+    private LinearLayout idLayout;
     private Button button;
     private TextView textView;
     private String mrl;
@@ -31,6 +37,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        idLayout = (LinearLayout) findViewById(R.id.idText).getParent();
         textView = (TextView) findViewById(R.id.textView);
         button = (Button) findViewById(R.id.button);
         requestQueue = Volley.newRequestQueue(this);
@@ -77,12 +84,13 @@ public class MainActivity extends Activity {
         button.setText("Checking...");
         button.setEnabled(false);
 
-        StringRequest mrlRequest = new StringRequest(Request.Method.GET, SERVER,
+        StringRequest mrlRequest = new StringRequest(Request.Method.GET, SERVER + "/mrl",
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         mrl = response;
                         textView.setVisibility(View.INVISIBLE);
+                        idLayout.setVisibility(View.VISIBLE);
                         button.setText("Play");
                         button.setEnabled(true);
                     }
@@ -100,6 +108,35 @@ public class MainActivity extends Activity {
         );
         mrlRequest.setRetryPolicy(new DefaultRetryPolicy(1000, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
         requestQueue.add(mrlRequest);
+    }
+
+    public void submitID(View v) {
+        final EditText idText = (EditText) findViewById(R.id.idText);
+        final String id = idText.getText().toString();
+
+        if ( id.equals("") )return;
+
+        StringRequest postID = new StringRequest(Request.Method.POST, SERVER + "/id",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(getApplicationContext(), "Couldn't post ID to server", Toast.LENGTH_LONG).show();
+                    }
+                }
+        ){
+            @Override
+            protected Map<String, String> getParams() {
+                Map<String,String> params = new HashMap<String, String>();
+                params.put("id", id);
+                return params;
+            }
+        };
+        requestQueue.add(postID);
     }
 
     @Override
