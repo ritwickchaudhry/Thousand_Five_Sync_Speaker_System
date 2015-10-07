@@ -37,8 +37,8 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
+    protected void onResume() {
+        super.onResume();
 
         startService(new Intent(this, CommandServer.class));
 
@@ -53,12 +53,10 @@ public class MainActivity extends Activity {
                 intent.putExtra("mrl", mrl);
                 intent.putExtra("play", true);
                 startService(intent);
-                button.setText("Pause");
+                button.setText("Stop");
                 break;
-            case "Pause":
-                intent = new Intent(this, PlayerService.class);
-                intent.putExtra("play", false);
-                startService(intent);
+            case "Stop":
+                if (PlayerService.isPlaying()) PlayerService.play(false);
                 button.setText("Play");
                 break;
             case "Recheck":
@@ -71,7 +69,7 @@ public class MainActivity extends Activity {
 
     private void checkForServer() {
         if (PlayerService.isPlaying()) {
-            button.setText("Pause");
+            button.setText("Stop");
             button.setEnabled(true);
             return;
         }
@@ -102,6 +100,14 @@ public class MainActivity extends Activity {
         );
         mrlRequest.setRetryPolicy(new DefaultRetryPolicy(1000, 3, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
         requestQueue.add(mrlRequest);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        stopService(new Intent(this, CommandServer.class));
+        stopService(new Intent(this, PlayerService.class));
     }
 
     @Override

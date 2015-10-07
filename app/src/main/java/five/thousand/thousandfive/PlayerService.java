@@ -3,6 +3,7 @@ package five.thousand.thousandfive;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
+import android.util.Log;
 import android.widget.Toast;
 
 import org.videolan.libvlc.LibVLC;
@@ -12,7 +13,7 @@ public class PlayerService extends Service {
 
     private static LibVLC mLibVLC;
     private static String mrl;
-    public enum State { UNPREPARED, PAUSED, PLAYING }
+    public enum State { UNPREPARED, STOPPED, PLAYING }
     public static State state = State.UNPREPARED;
 
     public PlayerService() {
@@ -25,7 +26,21 @@ public class PlayerService extends Service {
     }
 
     public static boolean isPlaying() {
-        return (mLibVLC != null) && mLibVLC.isPlaying();
+//        return (mLibVLC != null) && mLibVLC.isPlaying();
+        if (mLibVLC != null)
+            return mLibVLC.isPlaying();
+        else
+            return false;
+    }
+
+    public static void play(boolean play) {
+        if (mLibVLC == null) {
+            Log.e("PlayerService", "PlayerService.play called without initialization");
+            return;
+        }
+        if(play) mLibVLC.play();
+        else mLibVLC.stop();
+        state = (play) ? State.PLAYING : State.STOPPED;
     }
 
     @Override
@@ -43,7 +58,7 @@ public class PlayerService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent == null) return START_STICKY;
+        super.onStartCommand(intent, flags, startId);
 
         if (intent.hasExtra("mrl")) {
             mrl = intent.getStringExtra("mrl");
@@ -51,22 +66,22 @@ public class PlayerService extends Service {
 
         if (state == State.UNPREPARED) {
             mLibVLC.playMRL(mrl);
-            mLibVLC.pause();
-            state = State.PAUSED;
+            mLibVLC.stop();
+            state = State.STOPPED;
         }
 
 
-        if (state == State.PAUSED && intent.getBooleanExtra("play", false)) {
+        if (state == State.STOPPED && intent.getBooleanExtra("play", false)) {
             mLibVLC.play();
             //TODO: Thread this away
             state = State.PLAYING;
         }
         else if (state == State.PLAYING && !(intent.getBooleanExtra("play", true))) {
             mLibVLC.stop();
-            state = State.PAUSED;
+            state = State.STOPPED;
         }
 
-        return super.onStartCommand(intent, flags, startId);
+        return START_NOT_STICKY;
     }
 
     @Override
