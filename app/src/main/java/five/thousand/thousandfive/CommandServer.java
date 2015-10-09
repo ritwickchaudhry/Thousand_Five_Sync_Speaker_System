@@ -11,6 +11,7 @@ import com.esotericsoftware.kryonet.Server;
 
 import java.io.IOException;
 
+import five.thousand.thousandfive.Commands.Mute;
 import five.thousand.thousandfive.Commands.Stop;
 import five.thousand.thousandfive.Commands.Play;
 import five.thousand.thousandfive.utils.CommandSerialization;
@@ -22,7 +23,9 @@ public class CommandServer extends Service {
         @Override
         public void received(Connection conn, Object obj) {
             super.received(conn, obj);
-            if (obj instanceof Play)
+            if (obj instanceof Mute)
+                PlayerService.mute((Mute)obj);
+            else if (obj instanceof Play)
                 PlayerService.play(true);
             else if (obj instanceof Stop && PlayerService.isPlaying())
                 PlayerService.play(false);
@@ -34,6 +37,7 @@ public class CommandServer extends Service {
         CommandSerialization cs = new CommandSerialization();
         cs.register(Play.class);
         cs.register(Stop.class);
+        cs.register(Mute.class);
         server = new Server(16384, 2048, cs);
     }
 

@@ -9,10 +9,13 @@ import android.widget.Toast;
 import org.videolan.libvlc.LibVLC;
 import org.videolan.libvlc.LibVlcException;
 
+import five.thousand.thousandfive.Commands.Mute;
+
 public class PlayerService extends Service {
 
     private static LibVLC mLibVLC;
     private static String mrl;
+
     public enum State { UNPREPARED, STOPPED, PLAYING }
     public static State state = State.UNPREPARED;
 
@@ -41,6 +44,14 @@ public class PlayerService extends Service {
         if(play) mLibVLC.play();
         else mLibVLC.stop();
         state = (play) ? State.PLAYING : State.STOPPED;
+    }
+
+    public static void mute(Mute mute) {
+        if (mLibVLC == null) {
+            Log.e("PlayerService", "PlayerService.mute called without initialization");
+            return;
+        }
+        mute.doMute(mLibVLC);
     }
 
     @Override
