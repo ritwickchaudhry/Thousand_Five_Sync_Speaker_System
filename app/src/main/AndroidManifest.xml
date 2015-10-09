@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="five.thousand.thousandfive" >
+    package="five.thousand.thousandfive"
+    android:versionCode="1"
+    android:versionName="1.0">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -9,10 +11,12 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+        android:theme="@style/AppTheme"
+        android:logo="@drawable/logo" >
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
+            android:icon="@drawable/logo"
             android:configChanges="orientation" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
