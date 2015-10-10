@@ -26,9 +26,9 @@ public class CommandServer extends Service {
             if (obj instanceof Mute)
                 PlayerService.mute((Mute)obj);
             else if (obj instanceof Play)
-                PlayerService.play(true);
+                PlayerService.play(((Play)obj).MRL);
             else if (obj instanceof Stop && PlayerService.isPlaying())
-                PlayerService.play(false);
+                PlayerService.play(null);
             conn.close();
         }
     };

@@ -36,14 +36,16 @@ public class PlayerService extends Service {
             return false;
     }
 
-    public static void play(boolean play) {
+    public static void play(String mrl) {
         if (mLibVLC == null) {
             Log.e("PlayerService", "PlayerService.play called without initialization");
             return;
         }
-        if(play) mLibVLC.play();
+        if(mrl != null)
+            if (mrl.equals("")) mLibVLC.play();
+            else mLibVLC.playMRL(mrl);
         else mLibVLC.stop();
-        state = (play) ? State.PLAYING : State.STOPPED;
+        state = (mrl != null) ? State.PLAYING : State.STOPPED;
     }
 
     public static void mute(Mute mute) {
