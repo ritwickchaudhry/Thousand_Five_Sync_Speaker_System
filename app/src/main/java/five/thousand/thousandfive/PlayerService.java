@@ -1,13 +1,19 @@
 package five.thousand.thousandfive;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.os.Environment;
 import android.os.IBinder;
+import android.os.SystemClock;
 import android.util.Log;
 import android.widget.Toast;
 
 import org.videolan.libvlc.LibVLC;
 import org.videolan.libvlc.LibVlcException;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 import five.thousand.thousandfive.Commands.Mute;
 
@@ -15,17 +21,21 @@ public class PlayerService extends Service {
 
     private static LibVLC mLibVLC;
     private static String mrl;
+    private static Context mContext;
+    private static long pre;
 
     public enum State { UNPREPARED, STOPPED, PLAYING }
     public static State state = State.UNPREPARED;
 
-    public PlayerService() {
-        mLibVLC = new LibVLC();
+    public PlayerService() throws LibVlcException {
+        mLibVLC = LibVLC.getInstance();
         mLibVLC.setHttpReconnect(true);
         mLibVLC.setNetworkCaching(10); // ms
         //TODO: make this configurable over the network.
 
         mrl = null;
+
+        mContext = this;
     }
 
     public static boolean isPlaying() {

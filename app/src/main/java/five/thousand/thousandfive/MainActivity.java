@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import five.thousand.thousandfive.Commands.Mrl;
+
 public class MainActivity extends Activity {
 
     private RequestQueue requestQueue;
@@ -88,7 +90,8 @@ public class MainActivity extends Activity {
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        mrl = response;
+                        Mrl m = (Mrl) CommandServer.readCommand(response);
+                        mrl = m.mrl;
                         status.setText("Connected");
                         String bannerText = banner.getText().toString();
                         bannerText = bannerText.substring(0, 1).toUpperCase() + bannerText.substring(1);
@@ -96,7 +99,7 @@ public class MainActivity extends Activity {
                         submitID();
                         Intent intent = new Intent(getApplicationContext(), PlayerService.class);
                         intent.putExtra("mrl", mrl);
-                        intent.putExtra("play", false);
+                        intent.putExtra("play", m.play);
                         startService(intent);
                     }
                 },
