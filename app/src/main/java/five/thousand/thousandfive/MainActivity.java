@@ -3,12 +3,7 @@ package five.thousand.thousandfive;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
+import android.provider.Settings;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,26 +15,30 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends Activity {
 
     private RequestQueue requestQueue;
     public static String SERVER = "http://server.dns";
-    private LinearLayout idLayout;
-    private Button button;
-    private TextView textView;
+    private TextView status;
+    private TextView banner;
     private String mrl;
+    private Timer timer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        idLayout = (LinearLayout) findViewById(R.id.idText).getParent();
-        textView = (TextView) findViewById(R.id.textView);
-        button = (Button) findViewById(R.id.button);
+        status = (TextView) findViewById(R.id.status);
+        banner = (TextView) findViewById(R.id.banner);
         requestQueue = Volley.newRequestQueue(this);
     }
 
@@ -49,60 +48,62 @@ public class MainActivity extends Activity {
 
         startService(new Intent(this, CommandServer.class));
 
-        checkForServer();
-    }
-
-    public void buttonClicked(View v) {
-        Intent intent;
-        switch (button.getText().toString()) {
-            case "Play":
-                intent = new Intent(this, PlayerService.class);
-                intent.putExtra("mrl", mrl);
-                intent.putExtra("play", true);
-                startService(intent);
-                button.setText("Stop");
-                break;
-            case "Stop":
-                if (PlayerService.isPlaying()) PlayerService.play(false);
-                button.setText("Play");
-                break;
-            case "Recheck":
-                checkForServer();
-                break;
-            case "Checking...":
-            default:
+        final Date deadlineDate;
+        try {
+            deadlineDate = (new SimpleDateFormat("yyyy-MM-dd HH:mm")).parse(this.getString(R.string.Surbahaar_Datetime));
+            final Date currentDate = new Date();
+            if (currentDate.before(deadlineDate)) {
+                timer = new Timer(true);
+                timer.scheduleAtFixedRate(new TimerTask() {
+                    @Override
+                    public void run() {
+                        long timeDiff = deadlineDate.getTime() - (new Date()).getTime();
+                        long hours = timeDiff / (1000 * 60 * 60);
+                        timeDiff -= (hours * 60 * 60 * 1000);
+                        long minutes = timeDiff / (1000 * 60);
+                        timeDiff -= (minutes * 60 * 1000);
+                        long seconds = timeDiff / (1000);
+                        final String statusStr = hours + " hours, " + minutes + " minutes, " + seconds + " seconds left to Surbahar,";
+                        runOnUiThread(new Runnable(){
+                            @Override
+                            public void run() {
+                                status.setText(statusStr);
+                            }
+                        });
+                    }
+                }, 1000, 1000);
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
         }
+        checkForServer();
     }
 
     private void checkForServer() {
         if (PlayerService.isPlaying()) {
-            button.setText("Stop");
-            button.setEnabled(true);
             return;
         }
-
-        button.setText("Checking...");
-        button.setEnabled(false);
 
         StringRequest mrlRequest = new StringRequest(Request.Method.GET, SERVER + "/mrl",
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         mrl = response;
-                        textView.setVisibility(View.INVISIBLE);
-                        idLayout.setVisibility(View.VISIBLE);
-                        button.setText("Play");
-                        button.setEnabled(true);
+                        status.setText("Connected");
+                        String bannerText = banner.getText().toString();
+                        bannerText = bannerText.substring(0, 1).toUpperCase() + bannerText.substring(1);
+                        banner.setText(bannerText);
+                        submitID();
+                        Intent intent = new Intent(getApplicationContext(), PlayerService.class);
+                        intent.putExtra("mrl", mrl);
+                        intent.putExtra("play", false);
+                        startService(intent);
                     }
                 },
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         mrl = "";
-                        textView.setText("Couldn't find streaming server.");
-                        textView.setVisibility(View.VISIBLE);
-                        button.setText("Recheck");
-                        button.setEnabled(true);
                     }
                 }
         );
@@ -110,11 +111,11 @@ public class MainActivity extends Activity {
         requestQueue.add(mrlRequest);
     }
 
-    public void submitID(View v) {
-        final EditText idText = (EditText) findViewById(R.id.idText);
-        final String id = idText.getText().toString();
 
-        if ( id.equals("") )return;
+    public void submitID() {
+        final String id = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+
+        if ( id.equals("") ) return;
 
         StringRequest postID = new StringRequest(Request.Method.POST, SERVER + "/id",
                 new Response.Listener<String>() {
@@ -137,6 +138,14 @@ public class MainActivity extends Activity {
             }
         };
         requestQueue.add(postID);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        timer.cancel();
+        timer.purge();
+        timer = null;
     }
 
     @Override
